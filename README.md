@@ -37,7 +37,7 @@ OpenAI workspace sites can read the current user's email from
 SIWC-authenticated workspace sites may also receive
 `oai-authenticated-user-full-name` when the user's SIWC profile has a non-empty
 `name` claim. The full-name value is percent-encoded UTF-8 and is accompanied by
-'to-authenticated-user-full-name-encoding: percent-encoded-utf-8`.
+`oai-authenticated-user-full-name-encoding: percent-encoded-utf-8`.
 
 Treat the full name as optional and fall back to email when it is absent:
 
