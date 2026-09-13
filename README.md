@@ -73,8 +73,7 @@ optional or required ChatGPT sign-in:
   browser links or actions.
 - Pass a same-origin relative `returnTo` path for the destination after sign-in
   or sign-out. The helper validates and safely encodes it.
-- Mark protected pages with `export const dynamic = "force-dynamic"` because
-  they depend on per-request identity headers.
+- Mark protected pages with `export const dynamic = "force-dynamic"` because they depend on per-request identity headers.
 
 Dispatch owns `/signin-with-chatgpt`, `/signout-with-chatgpt`, `/callback`, the
 OAuth cookies, and identity header injection. Do not implement app routes for
@@ -108,3 +107,4 @@ The timeout defaults can be overridden for a controlled canary with `SITES_INSTA
 - [Drizzle D1 Guide](https://orm.drizzle.team/docs/get-started/d1-new)
 
 <!-- Cloudflare Workers Builds connection trigger: 2026-09-14 -->
+<!-- Cloudflare Workers Builds post-connect trigger: 2026-09-14T15:52Z -->
