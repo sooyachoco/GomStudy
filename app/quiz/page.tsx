@@ -54,10 +54,12 @@ function buildDailyQuiz(target: QuizWord, seed: number): QuizQuestion[] {
       word: target,
     },
     {
-      prompt: `“${target.word}”의 어원으로 알맞은 것은?`,
-      detail: "단어가 품고 있는 시작 이야기를 골라 보세요.",
-      choices: choicesFor(target.originTitle, ALL_WORDS.map((item) => item.originTitle), seed + 1),
-      answer: target.originTitle,
+      // 9~12월 데이터는 originTitle이 공통 템플릿으로 생성되므로
+      // 어원 퀴즈에서는 실제 origin 설명을 사용해 날짜별 지문이 달라지도록 한다.
+      prompt: `“${target.word}”의 어원 설명으로 알맞은 것은?`,
+      detail: "단어가 어디에서 왔는지 설명한 내용을 골라 보세요.",
+      choices: choicesFor(target.origin, ALL_WORDS.map((item) => item.origin), seed + 1),
+      answer: target.origin,
       word: target,
     },
     {
