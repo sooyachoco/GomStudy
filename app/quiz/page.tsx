@@ -44,10 +44,82 @@ function choicesFor(correct: string, candidates: string[], seed: number) {
   return shuffled([correct, ...shuffled(alternatives, seed).slice(0, 3)], seed + 97);
 }
 
+const ORIGIN_LANGUAGES = [
+  "고대 영어", "중세 영어", "옛 영어", "영어", "라틴어", "그리스어", "프랑스어", "옛 프랑스어", "중세 프랑스어", "독일어", "이탈리아어", "스페인어", "네덜란드어", "아랍어", "히브리어", "산스크리트어", "포르투갈어", "북유럽어",
+];
+
+const ORIGIN_STOP_WORDS = new Set([
+  "라는", "뜻이에요", "뜻이었어요", "뜻으로", "뜻에서", "뜻이", "말이에요", "말이죠", "말을", "가리켜요", "가리켜", "말해요", "쓰여요", "자리", "잡았어요", "됐어요", "되었어요", "담고", "있어요", "모습", "어떤", "것", "그", "이", "저", "및", "또는", "하는", "하는데", "위해", "통해", "따라", "처음", "오늘", "실제",
+]);
+
+function originLanguage(origin: string) {
+  return ORIGIN_LANGUAGES.find((language) => origin.includes(language)) || "";
+}
+
+function originTokens(origin: string) {
+  return origin
+    .replace(/[“”‘’'".,!?·()[\]{}:;]/g, " ")
+    .split(/\s+/)
+    .map((token) => token.trim())
+    .filter((token) => token.length >= 2 && !ORIGIN_STOP_WORDS.has(token));
+}
+
+function originFingerprint(origin: string) {
+  const language = originLanguage(origin);
+  const lower = origin.toLowerCase();
+  const morphology = ["re와", "un과", "en과", "de와", "con과", "com과", "pro와", "per와", "a와", "ad와", "in과", "ex와", "trans와"]
+    .find((marker) => lower.includes(marker)) || "";
+  return { language, morphology, tokens: new Set(originTokens(origin)) };
+}
+
+function originSimilarity(target: string, candidate: string) {
+  const a = originFingerprint(target);
+  const b = originFingerprint(candidate);
+  let score = 0;
+
+  if (a.language && a.language === b.language) score += 6;
+  if (a.morphology && a.morphology === b.morphology) score += 4;
+
+  let overlap = 0;
+  a.tokens.forEach((token) => {
+    if (b.tokens.has(token)) overlap += 1;
+  });
+  score += Math.min(overlap, 3) * 2;
+
+  const aRoots = target.match(/[A-Za-z]{3,}/g) || [];
+  const bRoots = candidate.match(/[A-Za-z]{3,}/g) || [];
+  const rootOverlap = aRoots.filter((root) => bRoots.some((other) => other.toLowerCase() === root.toLowerCase())).length;
+  score += Math.min(rootOverlap, 2) * 5;
+
+  if (target.includes("다시") && candidate.includes("다시")) score += 2;
+  if (target.includes("앞") && candidate.includes("앞")) score += 2;
+  if (target.includes("안") && candidate.includes("안")) score += 2;
+  if (target.includes("함께") && candidate.includes("함께")) score += 2;
+  if (target.includes("만들") && candidate.includes("만들")) score += 2;
+  if (target.includes("가리") && candidate.includes("가리")) score += 1;
+
+  return score;
+}
+
+function originChoicesFor(correct: string, words: QuizWord[], seed: number) {
+  const candidates = [...new Map(
+    words
+      .filter((item) => item.origin.trim() && item.origin.trim() !== correct.trim())
+      .map((item) => [item.origin.trim(), item.origin.trim()]),
+  ).values()];
+
+  const ranked = candidates
+    .map((origin, index) => ({ origin, score: originSimilarity(correct, origin), tie: hash(`${origin}-${seed}-${index}`) }))
+    .sort((a, b) => b.score - a.score || a.tie - b.tie);
+
+  const topPool = ranked.slice(0, Math.min(12, ranked.length));
+  const selected = shuffled(topPool, seed).slice(0, 3).map((item) => item.origin);
+  return shuffled([correct, ...selected], seed + 97);
+}
+
 function buildDailyQuiz(target: QuizWord, seed: number): QuizQuestion[] {
   const escapedWord = target.word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const blankExample = target.example.replace(new RegExp(`\\b${escapedWord}\\b`, "i"), "______");
-  const originChoices = ALL_WORDS.map((item) => item.origin).filter(Boolean);
 
   return [
     {
@@ -60,7 +132,7 @@ function buildDailyQuiz(target: QuizWord, seed: number): QuizQuestion[] {
     {
       prompt: `“${target.word}”의 어원으로 알맞은 것은?`,
       detail: "단어가 처음 어디에서 왔는지 실제 어원 설명을 골라 보세요.",
-      choices: choicesFor(target.origin, originChoices, seed + 1),
+      choices: originChoicesFor(target.origin, ALL_WORDS, seed + 1),
       answer: target.origin,
       word: target,
     },
