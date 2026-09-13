@@ -6,7 +6,6 @@ import { getDefaultDate, getWordBySavedAt, MONTH_NAMES, MONTH_WORDS } from "../w
 type QuizWord = {
   word: string;
   meaning: string;
-  originTitle: string;
   origin: string;
   example: string;
   translation: string;
@@ -38,13 +37,18 @@ function shuffled<T>(items: T[], seed: number) {
 }
 
 function choicesFor(correct: string, candidates: string[], seed: number) {
-  const alternatives = [...new Set(candidates)].filter((item) => item !== correct);
+  const alternatives = [...new Set(candidates)]
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .filter((item) => item !== correct.trim());
   return shuffled([correct, ...shuffled(alternatives, seed).slice(0, 3)], seed + 97);
 }
 
 function buildDailyQuiz(target: QuizWord, seed: number): QuizQuestion[] {
   const escapedWord = target.word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const blankExample = target.example.replace(new RegExp(`\\b${escapedWord}\\b`, "i"), "______");
+  const originChoices = ALL_WORDS.map((item) => item.origin).filter(Boolean);
+
   return [
     {
       prompt: `“${target.word}”의 뜻은 무엇일까요?`,
@@ -54,11 +58,9 @@ function buildDailyQuiz(target: QuizWord, seed: number): QuizQuestion[] {
       word: target,
     },
     {
-      // 9~12월 데이터는 originTitle이 공통 템플릿으로 생성되므로
-      // 어원 퀴즈에서는 실제 origin 설명을 사용해 날짜별 지문이 달라지도록 한다.
-      prompt: `“${target.word}”의 어원 설명으로 알맞은 것은?`,
-      detail: "단어가 어디에서 왔는지 설명한 내용을 골라 보세요.",
-      choices: choicesFor(target.origin, ALL_WORDS.map((item) => item.origin), seed + 1),
+      prompt: `“${target.word}”의 어원으로 알맞은 것은?`,
+      detail: "단어가 처음 어디에서 왔는지 실제 어원 설명을 골라 보세요.",
+      choices: choicesFor(target.origin, originChoices, seed + 1),
       answer: target.origin,
       word: target,
     },
