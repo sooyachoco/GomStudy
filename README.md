@@ -1,8 +1,7 @@
 # vinext-starter
 
 A clean full-stack starter running on
-[vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and
-Drizzle support.
+[vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and Drizzle support.
 
 ## Prerequisites
 
@@ -38,7 +37,7 @@ OpenAI workspace sites can read the current user's email from
 SIWC-authenticated workspace sites may also receive
 `oai-authenticated-user-full-name` when the user's SIWC profile has a non-empty
 `name` claim. The full-name value is percent-encoded UTF-8 and is accompanied by
-`oai-authenticated-user-full-name-encoding: percent-encoded-utf-8`.
+'to-authenticated-user-full-name-encoding: percent-encoded-utf-8`.
 
 Treat the full name as optional and fall back to email when it is absent:
 
@@ -108,3 +107,4 @@ The timeout defaults can be overridden for a controlled canary with `SITES_INSTA
 
 <!-- Cloudflare Workers Builds connection trigger: 2026-09-14 -->
 <!-- Cloudflare Workers Builds post-connect trigger: 2026-09-14T15:52Z -->
+<!-- Cloudflare GitHub App permission re-test: 2026-09-14 -->
