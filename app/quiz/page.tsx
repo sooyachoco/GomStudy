@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { getDefaultDate, getWordBySavedAt, MONTH_NAMES, MONTH_WORDS } from "../words";
+import { ETYMOLOGY_META } from "../etymology-meta";
 
 type QuizWord = {
   word: string;
@@ -67,16 +68,17 @@ function originTokens(origin: string) {
 
 function originFingerprint(item: QuizWord) {
   const origin = item.origin;
-  const language = item.originMeta?.language || originLanguage(origin);
+  const meta = ETYMOLOGY_META[item.word] || item.originMeta;
+  const language = meta?.language || originLanguage(origin);
   const lower = origin.toLowerCase();
-  const morphology = item.originMeta?.prefix || ["re와", "un과", "en과", "de와", "con과", "com과", "pro와", "per와", "a와", "ad와", "in과", "ex와", "trans와"]
+  const morphology = meta?.prefix || ["re와", "un과", "en과", "de와", "con과", "com과", "pro와", "per와", "a와", "ad와", "in과", "ex와", "trans와"]
     .find((marker) => lower.includes(marker)) || "";
   return {
     language,
     morphology,
-    root: item.originMeta?.root || "",
-    concept: item.originMeta?.concept || "",
-    shift: item.originMeta?.shift || "",
+    root: meta?.root || "",
+    concept: meta?.concept || "",
+    shift: meta?.shift || "",
     tokens: new Set(originTokens(origin)),
   };
 }
@@ -114,8 +116,7 @@ function originChoicesFor(correct: QuizWord, words: QuizWord[], seed: number) {
   const ranked = candidates
     .map((item, index) => ({ item, score: originSimilarity(correct, item), tie: hash(`${item.origin}-${seed}-${index}`) }))
     .sort((a, b) => b.score - a.score || a.tie - b.tie);
-  const topPool = ranked.slice(0, Math.min(16, ranked.length));
-  const selected = shuffled(topPool, seed).slice(0, 3).map((item) => item.item.origin);
+  const selected = ranked.slice(0, Math.min(3, ranked.length)).map((item) => item.item.origin);
   return shuffled([correct.origin, ...selected], seed + 97);
 }
 
@@ -188,7 +189,7 @@ export default function QuizPage() {
 
   function next() {
     if (!selected) return;
-    if (questionIndex + 1 >= questions.length) { setFinished(true); localStorage.setItem(`daily-word:quiz:${mode}:last-score`, String(score + (selected === current.answer ? 0 : 0))); return; }
+    if (questionIndex + 1 >= questions.length) { setFinished(true); localStorage.setItem(`daily-word:quiz:${mode}:last-score`, String(score)); return; }
     setQuestionIndex((value) => value + 1); setSelected("");
   }
 
